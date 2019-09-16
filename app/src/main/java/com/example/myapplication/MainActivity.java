@@ -16,11 +16,12 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final String KEY_CHRONOMETER_BASE = "chronometer base";
     public static final String KEY_CHRONOMETER_ON = "is chronometer on";
+    public static final String KEY_CHRONOMETER_STOPTIME = "chronometer stopped time";
     private Button start;
     private Button stop;
     private Button reset;
     private Chronometer timer;
-    private long base;
+    private long base = 0;
     private int isRunning;
 
     @Override
@@ -32,9 +33,15 @@ public class MainActivity extends AppCompatActivity {
         setListeners();
         if (savedInstanceState != null)
         {
-            timer.setBase(savedInstanceState.getLong(KEY_CHRONOMETER_BASE));
-            if (savedInstanceState.getInt(KEY_CHRONOMETER_ON) == 1)
+            isRunning = savedInstanceState.getInt(KEY_CHRONOMETER_ON);
+            if (isRunning == 1) {
+                timer.setBase(savedInstanceState.getLong(KEY_CHRONOMETER_BASE));
                 timer.start();
+            }
+            else {
+                base = savedInstanceState.getLong(KEY_CHRONOMETER_STOPTIME);
+                timer.setBase(savedInstanceState.getLong(KEY_CHRONOMETER_STOPTIME) + SystemClock.elapsedRealtime());
+            }
         }
     }
 
@@ -42,24 +49,21 @@ public class MainActivity extends AppCompatActivity {
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (base == 0L)
-                    base = 0;
+                isRunning = 1;
                 timer.setBase(SystemClock.elapsedRealtime() + base);
                 timer.start();
                 start.setEnabled(false);
                 stop.setEnabled(true);
-                isRunning = 1;
             }
         });
 
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                isRunning = 0;
                 base = timer.getBase() - SystemClock.elapsedRealtime();
                 timer.stop();
                 start.setEnabled(true);
-                stop.setEnabled(false);
-                isRunning = 0;
             }
         });
 
@@ -118,7 +122,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putLong(KEY_CHRONOMETER_BASE, SystemClock.elapsedRealtime() + base);
+        outState.putLong(KEY_CHRONOMETER_BASE, timer.getBase());
+        outState.putLong(KEY_CHRONOMETER_STOPTIME, base);
         outState.putInt(KEY_CHRONOMETER_ON, isRunning);
     }
 }
